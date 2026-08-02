@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a4971">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker Registered!', reg))
+          .catch(err => console.log('Service Worker Error', err));
+      });
+    }
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ई - चेतना घंटी</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; 
+      background: #f7e8dc; 
+      color: #333; 
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* सेक्शन कंट्रोल */
+    .app-section {
+      width: 100%;
+      display: none; /* व्यू हाइड करने के लिए */
+    }
+    .app-section.active-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header { text-align: center; margin-bottom: 20px; width: 100%; }
+    .header h1 { color: #222; font-size: 26px; font-weight: bold; margin-bottom: 5px; }
+    .header p { color: #666; font-size: 14px; }
+
+    /* घंटी कार्ड (होम पेज) */
+    .bell-card {
+      background: #ebe0d3;
+      border-radius: 24px;
+      padding: 25px 20px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      margin-bottom: 20px;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+    .bell-icon { font-size: 65px; display: block; margin-bottom: 8px; line-height: 1; }
+    .bell-title { color: #c62828; font-weight: bold; font-size: 17px; margin-bottom: 6px; }
+    .bell-time { color: #666; font-size: 13px; }
+
+    .bell-card.active { cursor: pointer; opacity: 1; }
+    .bell-card.active:active { transform: scale(0.98); }
+    .bell-card.disabled { opacity: 0.65; cursor: not-allowed; }
+
+    /* नेविगेशन बटन स्टाइल */
+    .btn {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      transition: transform 0.1s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-auto { background: #007791; color: white; }
+    .btn-manual { background: #e2e8d5; color: #2e4a16; border: 1.5px solid #bdcb9f; }
+    .btn-prayer { background: #f2dede; color: #8a2424; border: 1.5px solid #ebccd1; }
+
+    .test-audio-btn {
+      background: #ffffff;
+      color: #2e7d32;
+      border: 1.5px solid #a5d6a7;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-top: 15px;
+    }
+
+    /* ================= ऑटोमैटिक व्यू के CSS ================= */
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+    .nav-btn {
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0056b3;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      margin-bottom: 15px;
+    }
+
+    .timer-card { text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .timer-label { font-size: 13px; color: #666; margin-bottom: 4px; }
+    .digital-clock { font-size: 32px; font-weight: 700; color: #0056b3; margin-bottom: 15px; }
+
+    .switch-box {
+      background: #f0f0f0;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .switch-title { font-size: 14px; font-weight: 600; color: #333; }
+
+    .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .3s; border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px;
+      background-color: white; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #2e7d32; }
+    input:checked + .slider:before { transform: translateX(24px); }
+    input:disabled + .slider { background-color: #e0e0e0; cursor: not-allowed; }
+
+    .status-pill {
+      background: #ffebee; color: #c62828; padding: 6px 16px; border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+    }
+
+    .schedule-card { display: none; }
+    .schedule-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 12px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 10px;
+    }
+    .schedule-title { font-size: 14px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 6px; }
+    .edit-master-btn {
+      background: #f0f4f9; color: #0056b3; border: 1px solid #cce0ff;
+      padding: 5px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+
+    .schedule-list { display: flex; flex-direction: column; }
+    .schedule-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 8px; border-bottom: 1px solid #f5f5f5;
+    }
+    .schedule-item:last-child { border-bottom: none; }
+    .item-name { font-size: 14px; font-weight: 600; color: #0056b3; display: flex; align-items: center; gap: 8px; }
+    .item-name.green { color: #2e7d32; }
+    .item-name.red { color: #c62828; }
+
+    .time-badge {
+      background: #0056b3; color: white; padding: 5px 12px; border-radius: 14px;
+      font-size: 12px; font-weight: 700; min-width: 75px; text-align: center;
+    }
+    .time-badge.green { background: #2e7d32; }
+    .time-badge.red { background: #c62828; }
+
+    .time-input-edit {
+      padding: 4px 8px; border-radius: 8px; border: 1px solid #0056b3;
+      font-size: 12px; outline: none;
+    }
+
+    .btn-save-master {
+      width: 100%; background: #2e7d32; color: white; border: none;
+      padding: 10px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ================= 1. होम सेक्शन (MAIN HOME VIEW) ================= -->
+  <div id="homeView" class="app-section active-view">
+    <div class="header">
+      <h1>ई - चेतना घंटी</h1>
+      <p id="date-display">लोड हो रहा है...</p>
+    </div>
+
+    <!-- मुख्य घंटी कार्ड -->
+    <div id="smart-bell-btn" class="bell-card disabled">
+      <span class="bell-icon">🔔</span>
+      <div id="bell-title" class="bell-title">अभी निष्‍क्रिय है (समय होने पर दबाएं)</div>
+      <div id="live-time" class="bell-time">समय: 00:00:00 am</div>
+    </div>
+
+    <!-- नेविगेशन बटन -->
+    <button class="btn btn-auto" onclick="switchView('autoView')">
+      <span>🪄 स्वचालित घंटी टाइमर</span>
+      <span>➔</span>
+    </button>
+
+    <a href="manual.html" class="btn btn-manual">
+      <span>⚙️ मैनुअल घंटी कंट्रोल</span>
+      <span>➔</span>
+    </a>
+
+    <a href="prayer.html" class="btn btn-prayer">
+      <span>🙏 चेतना सत्र और प्रार्थना</span>
+      <span>➔</span>
+    </a>
+
+    <!-- 🐦 टेस्ट साउंड बटन -->
+    <button class="test-audio-btn" onclick="playTestAudio()">
+      <span>🐦</span> टेस्ट साउंड (स्पीकर चेक)
+    </button>
+
+    <!-- Help Button -->
+    <button onclick="document.getElementById('helpModal').style.display='block'" style="background: transparent; color: rgb(4, 162, 247); padding: 10px 15px; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+      ❓ ऐप का उपयोग कैसे करें? (User Manual)
+    </button>
+  </div>
+
+
+  <!-- ================= 2. ऑटोमैटिक घंटी टाइमर सेक्शन ================= -->
+  <div id="autoView" class="app-section">
+    
+    <!-- टॉप नेविगेशन टैब्स -->
+    <div class="nav-tabs">
+      <button class="nav-btn" onclick="switchView('homeView')">🏠 होम</button>
+      <button class="nav-btn">🪄 स्वचालित घंटी</button>
+    </div>
+
+    <!-- घड़ी व स्विच कार्ड -->
+    <div class="card timer-card">
+      <div class="timer-label">वर्तमान समय</div>
+      <div class="digital-clock" id="clock">00:00:00 am</div>
+
+      <div class="switch-box">
+        <span class="switch-title">ऑटोमैटिक मोड चालू करें</span>
+        <label class="switch">
+          <input type="checkbox" id="autoSwitch" onchange="toggleAutoMode(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="status-pill" id="statusPill">ऑटोमैटिक मोड बंद (OFF) है 🔴</div>
+    </div>
+
+    <!-- समय सारणी कार्ड -->
+    <div class="card schedule-card" id="scheduleCard">
+      <div class="schedule-header">
+        <div class="schedule-title">
+          📅 समय सारणी (<span id="startTimeHead">09:30 AM</span> - <span id="endTimeHead">03:50 PM</span>)
+        </div>
+        <button id="masterEditBtn" class="edit-master-btn" onclick="toggleMasterEdit()">✏️ समय बदलें</button>
+      </div>
+
+      <div class="schedule-list">
+        <div class="schedule-item">
+          <span class="item-name">🎵 एंथम सॉन्ग</span>
+          <span class="time-badge" id="badge-pray">09:30 AM</span>
+          <input type="time" class="time-input-edit" id="time-pray" value="09:30" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">📢 चेतना सत्र बुलावा</span>
+          <span class="time-badge" id="badge-chetna">09:45 AM</span>
+          <input type="time" class="time-input-edit" id="time-chetna" value="09:45" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 1st घंटी</span>
+          <span class="time-badge" id="badge-p1">10:00 AM</span>
+          <input type="time" class="time-input-edit" id="time-p1" value="10:00" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 2nd घंटी</span>
+          <span class="time-badge" id="badge-p2">10:40 AM</span>
+          <input type="time" class="time-input-edit" id="time-p2" value="10:40" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 3rd घंटी</span>
+          <span class="time-badge" id="badge-p3">11:20 AM</span>
+          <input type="time" class="time-input-edit" id="time-p3" value="11:20" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 4th घंटी</span>
+          <span class="time-badge" id="badge-p4">12:00 PM</span>
+          <input type="time" class="time-input-edit" id="time-p4" value="12:00" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name green">🍽️ लंच ब्रेक</span>
+          <span class="time-badge green" id="badge-mdm">12:40 PM</span>
+          <input type="time" class="time-input-edit" id="time-mdm" value="12:40" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 5th घंटी</span>
+          <span class="time-badge" id="badge-p5">01:10 PM</span>
+          <input type="time" class="time-input-edit" id="time-p5" value="13:10" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 6th घंटी</span>
+          <span class="time-badge" id="badge-p6">01:50 PM</span>
+          <input type="time" class="time-input-edit" id="time-p6" value="13:50" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 7th घंटी</span>
+          <span class="time-badge" id="badge-p7">02:30 PM</span>
+          <input type="time" class="time-input-edit" id="time-p7" value="14:30" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name">🔔 8th घंटी</span>
+          <span class="time-badge" id="badge-p8">03:10 PM</span>
+          <input type="time" class="time-input-edit" id="time-p8" value="15:10" style="display:none;">
+        </div>
+        <div class="schedule-item">
+          <span class="item-name red">🏠 छुट्टी</span>
+          <span class="time-badge red" id="badge-leave">03:50 PM</span>
+          <input type="time" class="time-input-edit" id="time-leave" value="15:50" style="display:none;">
+        </div>
+      </div>
+
+      <button id="saveMasterBtn" class="btn-save-master" onclick="saveSchedule()" style="display: none;">💾 नया समय सेव करें</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- हेल्प मॉडल (पॉप-अप) -->
+<div id="helpModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000;">
+  <div style="background:white; margin:10% auto; padding:20px; width:85%; max-width:500px; border-radius:10px; max-height:80vh; overflow-y:auto; color:#333;">
+    <h2>🔔 ई-चेतना घंटी: उपयोग निर्देश</h2>
+    <hr style="margin: 10px 0;">
+    <ol style="text-align:left; line-height:1.6; padding-left:20px;">
+      <li><strong>ऑनलाइन सेटअप:</strong> पहली बार ऐप खोलते समय इंटरनेट चालू रखें (1-2 मिनट) ताकि सभी ऑडियो लोड हो सकें।</li>
+      <li><strong>ऑफ़लाइन उपयोग:</strong> एक बार लोड होने के बाद ऐप पूरी तरह ऑफ़लाइन काम करेगा।</li>
+      <li><strong>साउंड सेटअप:</strong> अपने डिवाइस को एम्पलीफायर से जोड़ें।</li>
+      <li><strong>स्क्रीन ऑन रखें:</strong> सुनिश्चित करें कि मोबाइल की डिस्प्ले बंद न हो।</li>
+      <li><strong>टाइमर ऑन करें:</strong> सुबह ऑटोमैटिक घंटी टाइमर चालू कर दें।</li>
+    </ol>
+    <button onclick="document.getElementById('helpModal').style.display='none'" style="background:#e74c3c; color:white; border:none; padding:8px 15px; border-radius:5px; margin-top:15px; cursor:pointer;">बंद करें (Close)</button>
+  </div>
+</div>
+
+<footer style="text-align: center; padding: 15px; font-size: 14px; color: #666; margin-top: 20px;">
+  <p>© 2026 <strong>ई-चेतना घंटी</strong> सर्वाधिकार सुरक्षित । </p>
+  <p> <strong>शिक्षक</strong> द्वारा ❤️ डिज़ाइन और विकसित किया गया। </p>
+</footer>
+
+<!-- Background Silent Keep-Alive -->
+<audio id="silentAudio" loop src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"></audio>
+
+<script>
+  // ---------------- GLOBAL CONFIGURATION ----------------
+  const keys = ['pray', 'chetna', 'p1', 'p2', 'p3', 'p4', 'mdm', 'p5', 'p6', 'p7', 'p8', 'leave'];
+
+  const defaultSchedule = {
+    pray: "09:30", chetna: "09:45", p1: "10:00", p2: "10:40", p3: "11:20",
+    p4: "12:00", mdm: "12:40", p5: "13:10", p6: "13:50", p7: "14:30",
+    p8: "15:10", leave: "15:50"
+  };
+
+  const bellNames = {
+    pray: "एंथम सॉन्ग / प्रार्थना", chetna: "चेतना सत्र बुलावा",
+    p1: "1st घंटी", p2: "2nd घंटी", p3: "3rd घंटी", p4: "4th घंटी",
+    mdm: "लंच ब्रेक", p5: "5th घंटी", p6: "6th घंटी", p7: "7th घंटी",
+    p8: "8th घंटी", leave: "छुट्टी की घंटी"
+  };
+
+  const bellAudios = {
+    pray: "anthem.mp3", chetna: "chetna_call.mp3",
+    p1: "bell1.mp3", p2: "bell2.mp3", p3: "bell3.mp3",
+    p4: "bell4.mp3", mdm: "lunch.mp3", p5: "bell5.mp3",
+    p6: "bell6.mp3", p7: "bell7.mp3", p8: "bell8.mp3",
+    leave: "chutti.mp3"
+  };
+
+  let isAutoEnabled = false;
+  let isEditing = false;
+  let currentAudio = null;
+  let testAudio = null;
+  let manualActiveKey = null;
+
+  // ---------------- PAGE SWITCHING LOGIC ----------------
+  function switchView(viewId) {
+    document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active-view'));
+    document.getElementById(viewId).classList.add('active-view');
+  }
+
+  // ---------------- INIT ON LOAD ----------------
+  window.onload = function() {
+    loadSavedSchedule();
+    startClock();
+    
+    // ऑटोमैटिक मोड की स्थिति बहाल करना
+    const savedSwitchState = localStorage.getItem('auto_bell_switch_state');
+    if (savedSwitchState === 'true') {
+      document.getElementById('autoSwitch').checked = true;
+      toggleAutoMode(true, false);
+    }
+
+    // लूप टाइमर्स
+    setInterval(checkSchedule, 1000);
+    setInterval(validateSwitchStatus, 1000);
+    setInterval(updateSmartBell, 1000);
+    updateSmartBell();
+  };
+
+  function startClock() {
+    setInterval(() => {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      let seconds = now.getSeconds();
+      let ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12 || 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      
+      const clockElem = document.getElementById('clock');
+      if (clockElem) clockElem.innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+      
+      const liveTime = document.getElementById('live-time');
+      if (liveTime) liveTime.innerText = "समय: " + `${hours}:${minutes}:${seconds} ${ampm}`;
+    }, 1000);
+  }
+
+  function format12Hr(time24) {
+    if(!time24) return "";
+    let [h, m] = time24.split(":");
+    let hours = parseInt(h, 10);
+    let ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    hours = hours < 10 ? "0" + hours : hours;
+    return `${hours}:${m} ${ampm}`;
+  }
+
+  function loadSavedSchedule() {
+    const saved = JSON.parse(localStorage.getItem('school_bell_schedule')) || defaultSchedule;
+    keys.forEach(k => {
+      if(document.getElementById('time-' + k)) {
+        document.getElementById('time-' + k).value = saved[k];
+        document.getElementById('badge-' + k).innerText = format12Hr(saved[k]);
+      }
+    });
+    document.getElementById('startTimeHead').innerText = format12Hr(saved.pray);
+    document.getElementById('endTimeHead').innerText = format12Hr(saved.leave);
+  }
+
+  // ---------------- AUTOMATIC LOGIC ----------------
+  function validateSwitchStatus() {
+    const now = new Date();
+    const day = now.getDay();
+    const autoSwitch = document.getElementById('autoSwitch');
+    const saved = JSON.parse(localStorage.getItem('school_bell_schedule')) || defaultSchedule;
+
+    if (day === 0) {
+      disableSwitch("रविवार (School Holiday) 🚫");
+      return;
+    }
+
+    const [startH, startM] = saved.pray.split(':').map(Number);
+    const startTimeInMin = (startH * 60 + startM) - 15;
+
+    const [endH, endM] = saved.leave.split(':').map(Number);
+    const endTimeInMin = (endH * 60 + endM) + 2;
+
+    const currentMin = (now.getHours() * 60) + now.getMinutes();
+
+    if (currentMin < startTimeInMin || currentMin > endTimeInMin) {
+      disableSwitch("स्कूल समय के बाहर (Disabled) 🕒");
+    } else {
+      autoSwitch.disabled = false;
+      const statusPill = document.getElementById('statusPill');
+      if (!isAutoEnabled) {
+        statusPill.innerText = "ऑटोमैटिक मोड बंद (OFF) है 🔴";
+        statusPill.style.background = "#ffebee";
+        statusPill.style.color = "#c62828";
+      }
+    }
+  }
+
+  function disableSwitch(reasonText) {
+    const autoSwitch = document.getElementById('autoSwitch');
+    const statusPill = document.getElementById('statusPill');
+
+    if (autoSwitch.checked) {
+      autoSwitch.checked = false;
+      toggleAutoMode(false, true);
+    }
+    autoSwitch.disabled = true;
+    statusPill.innerText = reasonText;
+    statusPill.style.background = "#eeeeee";
+    statusPill.style.color = "#757575";
+  }
+
+  function toggleAutoMode(enabled, saveState = true) {
+    isAutoEnabled = enabled;
+    const silent = document.getElementById('silentAudio');
+    const statusPill = document.getElementById('statusPill');
+    const scheduleCard = document.getElementById('scheduleCard');
+
+    if (saveState) {
+      localStorage.setItem('auto_bell_switch_state', enabled);
+    }
+
+    if (enabled) {
+      silent.play().catch(e => console.log(e));
+      statusPill.innerText = "ऑटोमैटिक मोड चालू (ON) है 🟢";
+      statusPill.style.background = "#e8f5e9";
+      statusPill.style.color = "#2e7d32";
+      if (scheduleCard) scheduleCard.style.display = "block";
+    } else {
+      silent.pause();
+      statusPill.innerText = "ऑटोमैटिक मोड बंद (OFF) है 🔴";
+      statusPill.style.background = "#ffebee";
+      statusPill.style.color = "#c62828";
+      if (scheduleCard) scheduleCard.style.display = "none";
+    }
+  }
+
+  function checkSchedule() {
+    if (!isAutoEnabled) return;
+
+    const now = new Date();
+    if (now.getSeconds() !== 0) return;
+
+    let h = now.getHours();
+    let m = now.getMinutes();
+    h = h < 10 ? '0' + h : h;
+    m = m < 10 ? '0' + m : m;
+    const currentTime = `${h}:${m}`;
+
+    const saved = JSON.parse(localStorage.getItem('school_bell_schedule')) || defaultSchedule;
+
+    for (const [key, timeVal] of Object.entries(saved)) {
+      if (currentTime === timeVal) {
+        ringBell(bellAudios[key]);
+
+        // ऑटो बजने का रिकॉर्ड
+        localStorage.setItem('last_played_key', key);
+        localStorage.setItem('last_played_time', new Date().getTime());
+        break;
+      }
+    }
+  }
+
+  function toggleMasterEdit() {
+    isEditing = !isEditing;
+    const badges = document.querySelectorAll('.time-badge');
+    const inputs = document.querySelectorAll('.time-input-edit');
+    const masterBtn = document.getElementById('masterEditBtn');
+    const saveBtn = document.getElementById('saveMasterBtn');
+
+    if (isEditing) {
+      badges.forEach(b => b.style.display = 'none');
+      inputs.forEach(i => i.style.display = 'inline-block');
+      masterBtn.innerText = '❌ रद्द करें';
+      saveBtn.style.display = 'block';
+    } else {
+      badges.forEach(b => b.style.display = 'inline-block');
+      inputs.forEach(i => i.style.display = 'none');
+      masterBtn.innerText = '✏️ समय बदलें';
+      saveBtn.style.display = 'none';
+    }
+  }
+
+  function saveSchedule() {
+    const newSchedule = {};
+    keys.forEach(k => {
+      const val = document.getElementById('time-' + k).value;
+      newSchedule[k] = val;
+      document.getElementById('badge-' + k).innerText = format12Hr(val);
+    });
+
+    localStorage.setItem('school_bell_schedule', JSON.stringify(newSchedule));
+    document.getElementById('startTimeHead').innerText = format12Hr(newSchedule.pray);
+    document.getElementById('endTimeHead').innerText = format12Hr(newSchedule.leave);
+
+    alert('✅ नया समय सफलतापूर्वक सेव हो गया!');
+    toggleMasterEdit();
+  }
+
+  // ---------------- SMART MANUAL BELL LOGIC (HOME PAGE) ----------------
+  function updateSmartBell() {
+    const now = new Date();
+    const dateDisp = document.getElementById('date-display');
+    if (dateDisp) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      dateDisp.innerText = now.toLocaleDateString('hi-IN', options);
+    }
+
+    const day = now.getDay();
+    const btn = document.getElementById('smart-bell-btn');
+    const title = document.getElementById('bell-title');
+    if (!btn || !title) return;
+
+    if (day === 0) {
+      btn.className = "bell-card disabled";
+      title.innerText = "आज रविवार (छुट्टी) है 🚫";
+      btn.onclick = null;
+      return;
+    }
+
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    const saved = JSON.parse(localStorage.getItem('school_bell_schedule')) || defaultSchedule;
+    const lastKey = localStorage.getItem('last_played_key');
+    const lastTime = localStorage.getItem('last_played_time');
+
+    let activeKeyFound = null;
+
+    for (const [key, timeStr] of Object.entries(saved)) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const bellMin = h * 60 + m;
+
+      // समय विंडो: घंटी समय से +5 मिनट के अंदर
+      if (currentMin >= bellMin && currentMin < bellMin + 5) {
+        
+        // चेक करें क्या यह घंटी ऑटो या मैन्युअल द्वारा बज चुकी है (5 मिनट के भीतर)
+        const isAlreadyPlayed = (lastKey === key) && (lastTime && (now.getTime() - parseInt(lastTime)) < 300000);
+
+        if (!isAlreadyPlayed) {
+          activeKeyFound = key;
+          break;
+        }
+      }
+    }
+
+    if (activeKeyFound) {
+      manualActiveKey = activeKeyFound;
+      btn.className = "bell-card active";
+      title.innerText = `घंटी बजाएं (${bellNames[activeKeyFound]})`;
+      btn.onclick = playManualBell;
+    } else {
+      manualActiveKey = null;
+      btn.className = "bell-card disabled";
+      title.innerText = "अभी निष्‍क्रिय है (समय होने पर दबाएं)";
+      btn.onclick = null;
+    }
+  }
+
+  function playManualBell() {
+    if (manualActiveKey && bellAudios[manualActiveKey]) {
+      ringBell(bellAudios[manualActiveKey]);
+
+      // बजने का समय नोट करें
+      localStorage.setItem('last_played_key', manualActiveKey);
+      localStorage.setItem('last_played_time', new Date().getTime());
+
+      updateSmartBell();
+    }
+  }
+
+  function playTestAudio() {
+    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+    if (testAudio) { testAudio.pause(); testAudio.currentTime = 0; }
+
+    testAudio = new Audio('birdsound.mp3'); 
+    testAudio.play().catch(e => console.log(e));
+  }
+
+  function ringBell(audioPath) {
+    if (!audioPath) return;
+    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+    currentAudio = new Audio(audioPath);
+    currentAudio.play().catch(err => console.log(err));
+  }
+</script>
+
+</body>
+</html>

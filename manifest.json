@@ -1,0 +1,21 @@
+{
+  "short_name": "चेतना सत्र",
+  "name": "चेतना सत्र एवं प्रार्थना ऐप",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f7e8dc",
+  "theme_color": "#1a4971",
+  "display": "standalone",
+  "orientation": "portrait"
+}

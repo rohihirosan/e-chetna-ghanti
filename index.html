@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a4971">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker Registered!', reg))
+        .catch(err => console.log('Service Worker Error', err));
+    });
+  }
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ई - चेतना घंटी</title>
+    <meta name="theme-color" content="#f7e8dc">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f7e8dc; 
+            color: #333; 
+            padding: 30px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: #222; font-size: 26px; font-weight: bold; margin-bottom: 5px; }
+        .header p { color: #666; font-size: 14px; }
+
+        /* घंटी कार्ड */
+        .bell-card {
+            background: #ebe0d3;
+            border-radius: 24px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .bell-icon { font-size: 70px; display: block; margin-bottom: 8px; line-height: 1; }
+        .bell-title { color: #c62828; font-weight: bold; font-size: 17px; margin-bottom: 6px; }
+        .bell-time { color: #666; font-size: 13px; }
+
+        .bell-card.active { cursor: pointer; }
+        .bell-card.active:active { transform: scale(0.98); }
+        .bell-card.disabled { opacity: 0.65; cursor: not-allowed; }
+
+        /* नेविगेशन बटन स्टाइल */
+        .btn {
+            width: 100%;
+            max-width: 380px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-auto { background: #007791; color: white; border: none; }
+        .btn-manual { background: #e2e8d5; color: #2e4a16; border: 1.5px solid #bdcb9f; }
+        .btn-prayer { background: #f2dede; color: #8a2424; border: 1.5px solid #ebccd1; }
+
+        /* 🐦 टेस्ट ऑडियो बटन (सबसे नीचे) */
+        .test-audio-btn {
+            background: #ffffff;
+            color: #2e7d32;
+            border: 1.5px solid #a5d6a7;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            margin-top: 25px; /* ऊपर के बटन से दूरी के लिए */
+        }
+        .test-audio-btn:active {
+            transform: scale(0.95);
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>ई - चेतना घंटी</h1>
+        <p id="date-display">लोड हो रहा है...</p>
+    </div>
+
+    <!-- घंटी कार्ड -->
+    <div id="smart-bell-btn" class="bell-card disabled">
+        <span class="bell-icon">🔔</span>
+        <div id="bell-title" class="bell-title">अभी निष्‍क्रिय है (समय होने पर दबाएं)</div>
+        <div id="live-time" class="bell-time">समय: 00:00:00 am</div>
+    </div>
+
+    <!-- नेविगेशन बटन -->
+    <a href="auto.html" class="btn btn-auto">
+        <span>🪄 स्वचालित घंटी टाइमर</span>
+        <span>➔</span>
+    </a>
+
+    <a href="manual.html" class="btn btn-manual">
+        <span>⚙️ मैनुअल घंटी कंट्रोल</span>
+        <span>➔</span>
+    </a>
+
+    <a href="prayer.html" class="btn btn-prayer">
+        <span>🙏 चेतना सत्र और प्रार्थना</span>
+        <span>➔</span>
+    </a>
+
+    <!-- 🐦 कोयल साउंड टेस्ट बटन (सबसे नीचे) -->
+    <button class="test-audio-btn" onclick="playTestAudio()">
+        <span>🐦</span> टेस्ट साउंड (स्पीकर चेक)
+    </button>
+
+    <script>
+        const schedule = [
+            { time: "09:30", sound: "bell1.mp3", name: "प्रार्थना घंटी" },
+            { time: "09:45", sound: "bell1.mp3", name: "चेतना सत्र की घंटी" },
+            { time: "10:00", sound: "bell1.mp3", name: "1st घंटी" },
+            { time: "10:40", sound: "bell2.mp3", name: "2nd घंटी" },
+            { time: "11:20", sound: "bell3.mp3", name: "3rd घंटी" },
+            { time: "12:00", sound: "bell4.mp3", name: "4th घंटी" },
+            { time: "12:40", sound: "bell_lunch.mp3", name: "लंच ब्रेक घंटी" },
+            { time: "13:10", sound: "bell5.mp3", name: "5th घंटी" },
+            { time: "13:50", sound: "bell6.mp3", name: "6th घंटी" },
+            { time: "14:30", sound: "bell7.mp3", name: "7th घंटी" },
+            { time: "15:10", sound: "bell8.mp3", name: "8th घंटी" },
+            { time: "15:50", sound: "chutti.mp3", name: "छुट्टी की घंटी" }
+        ];
+
+        let currentAudio = null;
+        let testAudio = null;
+
+        // 🐦 कोयल साउंड टेस्ट फ़ंक्शन
+        function playTestAudio() {
+            if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            if (testAudio) { testAudio.pause(); testAudio.currentTime = 0; }
+
+            // यहाँ अपनी चिड़िया/कोयल वाली MP3 फ़ाइल का नाम रखें
+            testAudio = new Audio('birdsound.mp3'); 
+            testAudio.play();
+        }
+
+        function updateSmartBell() {
+            const now = new Date();
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').innerText = now.toLocaleDateString('hi-IN', options);
+
+            document.getElementById('live-time').innerText = "समय: " + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+            const day = now.getDay();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const currentTime = hours * 60 + minutes;
+
+            const btn = document.getElementById('smart-bell-btn');
+            const title = document.getElementById('bell-title');
+
+            if (day === 0 || currentTime < 570 || currentTime > 955) {
+                btn.className = "bell-card disabled";
+                title.innerText = "अभी निष्‍क्रिय है (समय होने पर दबाएं)";
+                btn.onclick = null;
+                return;
+            }
+
+            let activePeriod = null;
+            for (let item of schedule) {
+                let [h, m] = item.time.split(':').map(Number);
+                let startTime = h * 60 + m;
+                let endTime = startTime + 5; 
+
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    activePeriod = item;
+                    break;
+                }
+            }
+
+            if (activePeriod) {
+                btn.className = "bell-card active";
+                title.innerText = `घंटी बजाएं (${activePeriod.name})`;
+                btn.onclick = function() {
+                    if (testAudio) { testAudio.pause(); testAudio.currentTime = 0; }
+                    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+                    currentAudio = new Audio(activePeriod.sound);
+                    currentAudio.play();
+                };
+            } else {
+                btn.className = "bell-card disabled";
+                title.innerText = "अभी निष्‍क्रिय है (समय होने पर दबाएं)";
+                btn.onclick = null;
+            }
+        }
+
+        setInterval(updateSmartBell, 1000);
+        updateSmartBell();
+    </script>
+</body>
+</html>

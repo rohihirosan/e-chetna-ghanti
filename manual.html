@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>मैनुअल घंटी कंट्रोल</title>
+    <meta name="theme-color" content="#f7e8dc">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f7e8dc; 
+            color: #2e4d25; 
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        /* टॉप हेडर */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .home-btn {
+            background: #e8f0e6;
+            border: 1px solid #a3c299;
+            color: #2e4d25;
+            padding: 6px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .page-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2e4d25;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 🛑 स्टेटस कार्ड (बजते समय दिखने वाला) */
+        #status-card {
+            background: #f2dede;
+            border: 1.5px solid #ebccd1;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none; /* डिफ़ॉल्ट में छिपा हुआ */
+        }
+        .playing-text { color: #8a2424; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+        .stop-btn {
+            background: #c62828;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .stop-btn:active { transform: scale(0.95); }
+
+        /* 2-कॉलम ग्रिड लेआउट */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* कार्ड स्टाइल */
+        .card {
+            background: #eef3eb;
+            border: 1.5px solid #a8c59f;
+            border-radius: 14px;
+            padding: 15px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .card:active { transform: scale(0.96); }
+        .card-icon { font-size: 28px; margin-bottom: 6px; line-height: 1; }
+        .card-text { font-size: 14px; font-weight: bold; color: #2e4d25; }
+
+        /* फुल विड्थ कार्ड्स (लंच और छुट्टी) */
+        .full-width {
+            grid-column: span 2;
+        }
+        .card-lunch {
+            background: #e1ebd9;
+            border-color: #9cb991;
+        }
+        .card-chutti {
+            background: #f9ecec;
+            border-color: #e5b3b3;
+        }
+        .card-chutti .card-text { color: #8a2424; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- हेडर और होम बटन -->
+        <div class="top-bar">
+            <a href="index.html" class="home-btn">🏠 होम</a>
+            <div class="page-title">⚙️ मैनुअल कंट्रोल</div>
+        </div>
+
+        <!-- 🛑 बजाने पर दिखने वाला स्टेटस कार्ड -->
+        <div id="status-card">
+            <div id="playing-text" class="playing-text">🔊 घंटी बज रही है...</div>
+            <button class="stop-btn" onclick="stopBell()">🛑 बंद करें (STOP)</button>
+        </div>
+
+        <!-- 2-कॉलम ग्रिड -->
+        <div class="grid-container">
+            
+            <div class="card" onclick="playBell('1st घंटी', 'bell1.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">1st घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('2nd घंटी', 'bell2.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">2nd घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('3rd घंटी', 'bell3.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">3rd घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('4th घंटी', 'bell4.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">4th घंटी</span>
+            </div>
+
+            <!-- लंच ब्रेक (पूरा फैला हुआ) -->
+            <div class="card full-width card-lunch" onclick="playBell('लंच ब्रेक', 'lunch.mp3')">
+                <span class="card-icon">🍴</span>
+                <span class="card-text">लंच ब्रेक</span>
+            </div>
+
+            <div class="card" onclick="playBell('5th घंटी', 'bell5.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">5th घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('6th घंटी', 'bell6.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">6th घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('7th घंटी', 'bell7.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">7th घंटी</span>
+            </div>
+
+            <div class="card" onclick="playBell('8th घंटी', 'bell8.mp3')">
+                <span class="card-icon">🔔</span>
+                <span class="card-text">8th घंटी</span>
+            </div>
+
+            <!-- छुट्टी (पूरा फैला हुआ, गुलाबी) -->
+            <div class="card full-width card-chutti" onclick="playBell('छुट्टी', 'chutti.mp3')">
+                <span class="card-icon">🏠</span>
+                <span class="card-text">छुट्टी</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentAudio = null;
+
+        function playBell(name, file) {
+            // पिछला साउंड बंद करें
+            stopBell();
+
+            currentAudio = new Audio(file);
+            currentAudio.play();
+
+            // ऑडियो खत्म होने पर स्टेटस छुपाएं
+            currentAudio.onended = function() {
+                document.getElementById('status-card').style.display = 'none';
+            };
+
+            // स्टेटस बॉक्स अपडेट और शो करें
+            document.getElementById('playing-text').innerText = "🔊 " + name + " बज रही है...";
+            document.getElementById('status-card').style.display = 'block';
+        }
+
+        function stopBell() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            document.getElementById('status-card').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

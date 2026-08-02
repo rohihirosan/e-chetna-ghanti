@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>चेतना सत्र / प्रार्थना</title>
+    <meta name="theme-color" content="#f7e8dc">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f7e8dc; 
+            color: #333; 
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* हेडर और होम बटन */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .home-btn {
+            background: #e1ebf5;
+            border: 1px solid #b3cbe3;
+            color: #1a4971;
+            padding: 6px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .page-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a4971;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* मुख्य कार्ड */
+        .section-card {
+            background: #fefefe;
+            border-radius: 18px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 8px;
+        }
+
+        /* लिस्ट आइटम्स */
+        .song-item {
+            padding: 12px 5px;
+            border-bottom: 1px dashed rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .song-item:last-child { border-bottom: none; }
+
+        .song-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .song-info { display: flex; flex-direction: column; gap: 2px; flex-grow: 1; }
+        .song-name { font-size: 14px; font-weight: bold; color: #222; }
+        .song-sub { font-size: 11px; color: #666; }
+
+        /* बटन्स ग्रुप */
+        .btn-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-play { background: #0066cc; color: white; }
+        .btn-play:active { background: #004c99; transform: scale(0.95); }
+
+        .btn-pause { background: #e65100; color: white; }
+        .btn-pause:active { background: #b23c00; transform: scale(0.95); }
+
+        .btn-stop { background: #c62828; color: white; display: none; }
+        .btn-stop:active { background: #8e1c1c; transform: scale(0.95); }
+
+        /* ऑडियो प्रोग्रेस बार लेआउट */
+        .player-controls {
+            display: none; /* चालू होने पर दिखेगा */
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.4);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 2px;
+        }
+        .seek-slider {
+            flex-grow: 1;
+            height: 5px;
+            accent-color: #0066cc;
+            cursor: pointer;
+        }
+        .time-display {
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
+            min-width: 75px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- टॉप बार -->
+        <div class="top-bar">
+            <a href="index.html" class="home-btn">🏠 होम</a>
+            <div class="page-title">🙏 चेतना सत्र / प्रार्थना</div>
+        </div>
+
+        <!-- 1. चेतना सत्र ऑडियो सूची -->
+        <div class="section-card">
+            <div class="section-title">🎼 चेतना सत्र ऑडियो सूची</div>
+
+            <div class="song-item" id="item-1">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🔔 प्रारंभिक गीत</span>
+                        <span class="song-sub">टन-टन सुनो घंटी बजी, सुबह सवेरे... मिक्स गीत</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(1, 'anthem.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(1)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-2">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">✨ तू ही राम है तू रहीम है</span>
+                        <span class="song-sub">सर्वधर्म प्रार्थना</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(2, 'tuhiram.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(2)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-3">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🚩 मेरी रफ्तार पे सूरज की किरण</span>
+                        <span class="song-sub">बिहार राज्य प्रार्थना</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(3, 'meri_raftar.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(3)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-4">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🌻 मेरे भारत के कण्ठहार</span>
+                        <span class="song-sub">बिहार राज्य गीत</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(4, 'mere_bharat_ke_kanthhar.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(4)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-5">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🇮🇳 राष्ट्रगान (जन गण मन)</span>
+                        <span class="song-sub">52 सेकंड का पूर्ण राष्ट्रगान</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(5, 'jangan.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(5)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-6">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🚩 राष्ट्रगीत (वंदे मातरम्)</span>
+                        <span class="song-sub">राष्ट्रीय गीत</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(6, 'vandematram.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(6)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. देशभक्ति गीत -->
+        <div class="section-card">
+            <div class="section-title">🇮🇳 देशभक्ति गीत</div>
+
+            <div class="song-item" id="item-7">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 सारे जहाँ से अच्छा</span>
+                        <span class="song-sub">हिंदोस्ताँ हमारा</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(7, 'sare_jahan_se_accha.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(7)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-8">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 नन्हा मुन्ना राही हूँ</span>
+                        <span class="song-sub">देश का सिपाही हूँ</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(8, 'nanha_munha.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(8)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-9">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 छोड़ो कल की बातें</span>
+                        <span class="song-sub">कल की बात पुरानी</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(9, 'choro_kal_ki_batein.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(9)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-10">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 ऐ मेरे वतन के लोगों</span>
+                        <span class="song-sub">जरा आँख में भर लो पानी</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(10, 'aimerevatan.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(10)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-11">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 तेरी मिट्टी में मिल जावाँ</span>
+                        <span class="song-sub">देशभक्ति गीत</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(11, 'terimitti.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(11)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-12">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 भारत हमको जान से प्यारा है</span>
+                        <span class="song-sub">सबसे प्यारा गुलसिताँ हमारा है</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(12, 'bharat_humko_jan_se.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(12)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-13">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 मेरे देश की धरती</span>
+                        <span class="song-sub">सोना उगले उगले हीरे मोती</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(13, 'mere_desh_ki_dharti.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(13)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-14">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 देश मेरे देश मेरे</span>
+                        <span class="song-sub">मेरी जान है तू</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(14, 'deshmere.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(14)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-15">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 मेरा रंग दे बसंती चोला</span>
+                        <span class="song-sub">माए रंग दे बसंती चोला</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(15, 'mera_rang_de_basanti.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(15)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-16">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">🎵 जय हो</span>
+                        <span class="song-sub">विजयी गीत</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(16, 'jaiho.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(16)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. राष्ट्रीय नारे -->
+        <div class="section-card">
+            <div class="section-title">📢 राष्ट्रीय नारा / जयकारे</div>
+
+            <div class="song-item" id="item-17">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">📣 15 अगस्त के नारे</span>
+                        <span class="song-sub">स्वतंत्रता दिवस जयकारे</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(17, '15augnara.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(17)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <div class="song-item" id="item-18">
+                <div class="song-header">
+                    <div class="song-info">
+                        <span class="song-name">📣 26 जनवरी के नारे</span>
+                        <span class="song-sub">गणतंत्र दिवस जयकारे</span>
+                    </div>
+                    <div class="btn-group">
+                        <button class="action-btn btn-play" onclick="toggleAudio(18, '26jannara.mp3')">▶ बजाएं</button>
+                        <button class="action-btn btn-stop" onclick="stopCurrentAudio()">🛑</button>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <input type="range" class="seek-slider" value="0" oninput="seekTo(18)">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let currentId = null;
+
+        function toggleAudio(id, filePath) {
+            const item = document.getElementById(`item-${id}`);
+            const playBtn = item.querySelector('.btn-play, .btn-pause');
+            const stopBtn = item.querySelector('.btn-stop');
+            const controls = item.querySelector('.player-controls');
+            const slider = item.querySelector('.seek-slider');
+            const timeDisplay = item.querySelector('.time-display');
+
+            // 1. अगर वही गाना बज रहा है और "Pause" दबाया गया
+            if (currentId === id && currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                playBtn.className = "action-btn btn-play";
+                playBtn.innerHTML = "▶ चालू रखें";
+                return;
+            }
+
+            // 2. अगर वही गाना पॉज़ था और "Resume" दबाया गया
+            if (currentId === id && currentAudio && currentAudio.paused) {
+                currentAudio.play();
+                playBtn.className = "action-btn btn-pause";
+                playBtn.innerHTML = "⏸ रोकें";
+                return;
+            }
+
+            // 3. अगर कोई दूसरा गाना चल रहा है, तो उसे पूरी तरह बंद करें
+            if (currentAudio) {
+                stopCurrentAudio();
+            }
+
+            // 4. नया गाना प्ले करें
+            currentId = id;
+            currentAudio = new Audio(filePath);
+
+            playBtn.className = "action-btn btn-pause";
+            playBtn.innerHTML = "⏸ रोकें";
+            stopBtn.style.display = "inline-flex";
+            controls.style.display = "flex";
+
+            currentAudio.play();
+
+            // समय अपडेट लॉजिक
+            currentAudio.ontimeupdate = function() {
+                if (currentAudio.duration) {
+                    const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    slider.value = progress;
+                    timeDisplay.innerText = formatTime(currentAudio.currentTime) + " / " + formatTime(currentAudio.duration);
+                }
+            };
+
+            // गाना खत्म होने पर रीसेट करें
+            currentAudio.onended = function() {
+                stopCurrentAudio();
+            };
+        }
+
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+
+            if (currentId) {
+                const item = document.getElementById(`item-${currentId}`);
+                if (item) {
+                    const playBtn = item.querySelector('.action-btn');
+                    const stopBtn = item.querySelector('.btn-stop');
+                    const controls = item.querySelector('.player-controls');
+                    const slider = item.querySelector('.seek-slider');
+
+                    playBtn.className = "action-btn btn-play";
+                    playBtn.innerHTML = "▶ बजाएं";
+                    stopBtn.style.display = "none";
+                    controls.style.display = "none";
+                    slider.value = 0;
+                }
+            }
+
+            currentAudio = null;
+            currentId = null;
+        }
+
+        function seekTo(id) {
+            if (currentAudio && currentId === id) {
+                const item = document.getElementById(`item-${id}`);
+                const slider = item.querySelector('.seek-slider');
+                const seekTime = (slider.value / 100) * currentAudio.duration;
+                currentAudio.currentTime = seekTime;
+            }
+        }
+
+        function formatTime(seconds) {
+            let min = Math.floor(seconds / 60);
+            let sec = Math.floor(seconds % 60);
+            if (min < 10) min = "0" + min;
+            if (sec < 10) sec = "0" + sec;
+            return min + ":" + sec;
+        }
+    </script>
+</body>
+</html>

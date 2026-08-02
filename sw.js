@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Rohit Kumar (Teacher)
+ * App: e-Chetna Ghanti - Service Worker
+ * All Rights Reserved.
+ */
+
 const CACHE_NAME = 'prarthana-app-v1';
 const urlsToCache = [
   './',

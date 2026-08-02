@@ -4,7 +4,7 @@
  * All Rights Reserved.
  */
 
-const CACHE_NAME = 'prarthana-app-v1';
+const CACHE_NAME = 'prarthana-app-v3';
 const urlsToCache = [
   './',
   './index.html',
